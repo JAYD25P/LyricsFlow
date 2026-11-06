@@ -129,15 +129,6 @@ edit("java/com/lyricflow/playback/LyricListenerService.kt", service)
 p = root / "res/values/strings.xml"
 p.write_text(p.read_text().replace("<string name=\"app_name\">LyricFlow</string>", "<string name=\"app_name\">Lyrical</string>").replace("Live, synced lyrics for whatever is playing", "Lyrical live synced lyrics widget"))
 
-    def add_new_modes(match):
-        indent = match.group(1)
-        return (match.group(0) + "\\n" +
-                indent + 'BgMode.ICE -> Text("Cool frosted-glass finish with an icy blue tint.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)' + "\\n" +
-                indent + 'BgMode.GLASS -> Text("Smoked translucent glass with a soft highlight and border.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)')
-    s, count = re.subn(pattern, add_new_modes, s)
-    if count == 0:
-        raise SystemExit("Could not locate the background-mode settings when expression in Screens.kt")
-    return s
 edit("java/com/lyricflow/ui/Screens.kt", screens)
 
 def renderer(s):
