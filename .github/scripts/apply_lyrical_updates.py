@@ -80,7 +80,21 @@ def renderer(s):
 edit("java/com/lyricflow/widget/BackgroundRenderer.kt", renderer)
 
 def widget(s):
-    s = s.replace("import android.content.Context", "import android.content.Context" + chr(10) + "import android.content.Intent")
+    # Normalize Intent imports: keep exactly one Android Intent import and
+    # remove competing/duplicate short-name imports that make Kotlin ambiguous.
+    import_lines = s.splitlines()
+    import_lines = [line for line in import_lines
+                    if not (line.startswith("import ") and line.endswith(".Intent")
+                            and line != "import android.content.Intent")]
+    while import_lines.count("import android.content.Intent") > 1:
+        import_lines.remove("import android.content.Intent")
+    if "import android.content.Intent" not in import_lines:
+        try:
+            context_index = import_lines.index("import android.content.Context")
+            import_lines.insert(context_index + 1, "import android.content.Intent")
+        except ValueError:
+            import_lines.insert(0, "import android.content.Intent")
+    s = "\\n".join(import_lines)
     s = s.replace("WidgetBody(s, np, bg, listening)", "WidgetBody(s, np, bg, listening, context)")
     s = s.replace("private fun WidgetBody(s: LyricSettings, np: NowPlaying, bg: Bitmap?, listening: Boolean)", "private fun WidgetBody(s: LyricSettings, np: NowPlaying, bg: Bitmap?, listening: Boolean, context: Context)")
     s = s.replace("ColorProvider(Color(s.textColor).copy(alpha = 0.55f))", "ColorProvider(Color(s.textColor).copy(alpha = 0.82f))")
