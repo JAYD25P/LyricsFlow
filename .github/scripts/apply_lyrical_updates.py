@@ -51,8 +51,14 @@ edit("java/com/lyricflow/ui/LyricsView.kt", lyrics)
 def screens(s):
     s = s.replace('Section("Background", "Opacity lets your wallpaper show through the widget.")',
                   'Section("Background & widget style", "Choose a look for the live home-screen lyrics widget too. Ice gives a cool frosted finish; Glass uses a smoked translucent panel.")')
-    import re
-    pattern = r'(?m)^([ \\t]*)BgMode\\.SYSTEM -> Text\\("Follows your phone.s Material You colours \\(Android 12\\+\\)\\.".*)
+    # Make the settings-screen when expression exhaustive for the added modes.
+    if "BgMode.ICE -> Text(" not in s:
+        anchor = "BgMode.SYSTEM -> Text("
+        if anchor not in s:
+            raise SystemExit("Could not locate BackgroundMode settings when-expression in Screens.kt")
+        s = s.replace(anchor,
+            'BgMode.ICE -> Text("Cool frosted-glass finish with an icy blue tint.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)\\n                BgMode.GLASS -> Text("Smoked translucent glass with a soft highlight and border.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)\\n                ' + anchor, 1)
+    return s
 edit("java/com/lyricflow/ui/Screens.kt", screens)
 
 def renderer(s):
