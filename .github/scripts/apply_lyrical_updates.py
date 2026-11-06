@@ -25,14 +25,7 @@ def lyrics(s):
             val shownChars = (codePoints * progress * 1.25f).roundToInt().coerceIn(0, codePoints)
             val revealEnd = main.offsetByCodePoints(0, shownChars)
             addStyle(SpanStyle(color = c.accent), 0, revealEnd)
-            if (revealEnd < main.length) {
-                val cursorStart = length
-                append("▏")
-                addStyle(SpanStyle(color = c.accent), cursorStart, length)
-                val hiddenStart = length
-                append(main.substring(revealEnd))
-                addStyle(SpanStyle(color = Color.Transparent), hiddenStart, length)
-            }
+            addStyle(SpanStyle(color = Color.Transparent), revealEnd, main.length)
         }'''
     if old_typewriter not in s:
         raise SystemExit("Typewriter source block did not match; stopping safely.")
