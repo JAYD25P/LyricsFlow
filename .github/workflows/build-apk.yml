@@ -33,31 +33,104 @@ jobs:
         run: |
           unzip -o LyricsFlow-Source.zip
           test -f LyricFlow/app/build.gradle.kts
-      - name: Apply Kotlin compatibility fixes
+      - name: Apply Lyrical UI, widget and compatibility updates
         working-directory: LyricFlow
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p = Path("app/src/main/java/com/lyricflow/ui/LyricsView.kt")
-          s = p.read_text()
-          s = s.replace("import androidx.compose.foundation.layout.matchParentSize", "import androidx.compose.foundation.layout.fillMaxSize")
-          s = s.replace("Modifier.matchParentSize()", "Modifier.fillMaxSize()")
-          p.write_text(s)
+          root = Path("app/src/main")
+          def edit(path, fn):
+              p = root / path
+              s = p.read_text()
+              p.write_text(fn(s))
 
-          p = Path("app/src/main/java/com/lyricflow/widget/LyricWidget.kt")
-          s = p.read_text()
-          s = s.replace("import android.content.Context", "import android.content.Context\nimport android.content.Intent")
-          s = s.replace("WidgetBody(s, np, bg, listening)", "WidgetBody(s, np, bg, listening, context)")
-          s = s.replace("private fun WidgetBody(s: LyricSettings, np: NowPlaying, bg: Bitmap?, listening: Boolean)", "private fun WidgetBody(s: LyricSettings, np: NowPlaying, bg: Bitmap?, listening: Boolean, context: Context)")
-          s = s.replace("actionStartActivity<MainActivity>()", "actionStartActivity(Intent(context, MainActivity::class.java))")
-          p.write_text(s)
+          def model(s):
+              return s.replace(
+                  'SYSTEM("System colours"), SOLID("Solid"), GRADIENT("Gradient"), ALBUM_ART("Album art"), IMAGE("My photo")',
+                  'SYSTEM("System colours"), SOLID("Solid"), GRADIENT("Gradient"), ALBUM_ART("Album art"), IMAGE("My photo"), ICE("Ice"), GLASS("Glass")')
+          edit("java/com/lyricflow/data/Model.kt", model)
+
+          def lyrics(s):
+              s = s.replace("import androidx.compose.foundation.layout.matchParentSize", "import androidx.compose.foundation.layout.fillMaxSize")
+              s = s.replace("Modifier.matchParentSize()", "Modifier.fillMaxSize()")
+              s = s.replace('''            BgMode.GRADIENT ->
+                          Box(Modifier.fillMaxSize().background(Brush.linearGradient(gradient.colors.map { Color(it) }), alpha = a))''',
+              '''            BgMode.GRADIENT ->
+                          Box(Modifier.fillMaxSize().background(Brush.linearGradient(gradient.colors.map { Color(it) }), alpha = a))
+                      BgMode.ICE -> {
+                          Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xFFB9E7F5), Color(0xFF6E9FB8), Color(0xFFD9F4FA))), alpha = a))
+                          Box(Modifier.fillMaxSize().background(Color.White.copy(alpha = 0.22f)))
+                      }
+                      BgMode.GLASS -> {
+                          Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xFF101827), Color(0xFF26364A), Color(0xFF111827))), alpha = a))
+                          Box(Modifier.fillMaxSize().background(Color(0xFFB9D2E5).copy(alpha = 0.24f)))
+                      }''')
+              s = s.replace('else 0.4f) else 0.38f + 0.62f * a', 'else 0.72f) else 0.68f + 0.32f * a')
+              s = s.replace('style = TextStyle(shadow = glow),', 'style = TextStyle(shadow = glow ?: Shadow(color = Color.Black.copy(alpha = 0.55f), blurRadius = 5f)),')
+              s = s.replace('color = c.text.copy(alpha = 0.6f),', 'color = c.text.copy(alpha = 0.88f),')
+              return s
+          edit("java/com/lyricflow/ui/LyricsView.kt", lyrics)
+
+          def screens(s):
+              s = s.replace('Section("Background", "Opacity lets your wallpaper show through the widget.")',
+                            'Section("Background & widget style", "Choose a look for the live home-screen lyrics widget too. Ice gives a cool frosted finish; Glass uses a smoked translucent panel.")')
+              s = s.replace('''                BgMode.SYSTEM -> Text("Follows your phone's Material You colours (Android 12+).", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+              }''',
+              '''                BgMode.SYSTEM -> Text("Follows your phone's Material You colours (Android 12+).", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                BgMode.ICE -> Text("Cool frosted-glass finish with an icy blue tint.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                BgMode.GLASS -> Text("Smoked translucent glass with a soft highlight and border.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+              }''')
+              return s
+          edit("java/com/lyricflow/ui/Screens.kt", screens)
+
+          def renderer(s):
+              return s.replace('''            BgMode.IMAGE -> {''', '''            BgMode.ICE -> {
+                drawGradient(c, listOf(0xFFB9E7F5.toInt(), 0xFF6E9FB8.toInt(), 0xFFD9F4FA.toInt()))
+                val frost = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(92, 225, 248, 255) }
+                c.drawRoundRect(RectF(12f, 12f, W - 12f, H - 12f), 42f, 42f, frost)
+                val shine = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(70, 255, 255, 255) }
+                c.drawRect(0f, 0f, W.toFloat(), H * 0.22f, shine)
+            }
+            BgMode.GLASS -> {
+                drawGradient(c, listOf(0xFF101827.toInt(), 0xFF26364A.toInt(), 0xFF111827.toInt()))
+                val pane = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(118, 210, 230, 245) }
+                c.drawRoundRect(RectF(10f, 10f, W - 10f, H - 10f), 48f, 48f, pane)
+                val edge = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(95, 255, 255, 255); style = Paint.Style.STROKE; strokeWidth = 5f }
+                c.drawRoundRect(RectF(12f, 12f, W - 12f, H - 12f), 46f, 46f, edge)
+            }
+            BgMode.IMAGE -> {''')
+          edit("java/com/lyricflow/widget/BackgroundRenderer.kt", renderer)
+
+          def widget(s):
+              s = s.replace("import android.content.Context", "import android.content.Context\\nimport android.content.Intent")
+              s = s.replace("WidgetBody(s, np, bg, listening)", "WidgetBody(s, np, bg, listening, context)")
+              s = s.replace("private fun WidgetBody(s: LyricSettings, np: NowPlaying, bg: Bitmap?, listening: Boolean)", "private fun WidgetBody(s: LyricSettings, np: NowPlaying, bg: Bitmap?, listening: Boolean, context: Context)")
+              s = s.replace("ColorProvider(Color(s.textColor).copy(alpha = 0.55f))", "ColorProvider(Color(s.textColor).copy(alpha = 0.82f))")
+              s = s.replace("actionStartActivity<MainActivity>()", "actionStartActivity(Intent(context, MainActivity::class.java))")
+              return s
+          edit("java/com/lyricflow/widget/LyricWidget.kt", widget)
+
+          def service(s):
+              return s.replace('''                val next = np.lyrics.getOrNull(np.indexAt(pos) + 1) ?: break
+                delay(((next.timeMs - pos) / np.speed).toLong().coerceAtLeast(40L))
+                redraw()''',
+              '''                val next = np.lyrics.getOrNull(np.indexAt(pos) + 1)
+                val untilNextLine = next?.let { ((it.timeMs - pos) / np.speed).toLong().coerceAtLeast(40L) } ?: 1000L
+                // Redraw at lyric boundaries and at least once per second while playing.
+                // The periodic refresh recovers from dropped media-session callbacks.
+                delay(minOf(untilNextLine, 1000L))
+                redraw()''')
+          edit("java/com/lyricflow/playback/LyricListenerService.kt", service)
+
+          p = root / "res/values/strings.xml"
+          p.write_text(p.read_text().replace("<string name=\"app_name\">LyricFlow</string>", "<string name=\"app_name\">Lyrical</string>").replace("Live, synced lyrics for whatever is playing", "Lyrical live synced lyrics widget"))
           PY
       - name: Build debug APK
         working-directory: LyricFlow
         run: gradle :app:assembleDebug --no-daemon
       - uses: actions/upload-artifact@v4
         with:
-          name: LyricsFlow-APK
+          name: Lyrical-APK
           path: LyricFlow/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
