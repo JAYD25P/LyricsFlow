@@ -94,7 +94,7 @@ def widget(s):
             import_lines.insert(context_index + 1, "import android.content.Intent")
         except ValueError:
             import_lines.insert(0, "import android.content.Intent")
-    s = "\\n".join(import_lines)
+    s = "\n".join(import_lines)
     s = s.replace("WidgetBody(s, np, bg, listening)", "WidgetBody(s, np, bg, listening, context)")
     s = s.replace("private fun WidgetBody(s: LyricSettings, np: NowPlaying, bg: Bitmap?, listening: Boolean)", "private fun WidgetBody(s: LyricSettings, np: NowPlaying, bg: Bitmap?, listening: Boolean, context: Context)")
     s = s.replace("ColorProvider(Color(s.textColor).copy(alpha = 0.55f))", "ColorProvider(Color(s.textColor).copy(alpha = 0.82f))")
