@@ -80,7 +80,6 @@ def renderer(s):
 edit("java/com/lyricflow/widget/BackgroundRenderer.kt", renderer)
 
 def widget(s):
-    s = s.replace("import com.lyricflow.data.Align", "import com.lyricflow.data.Align" + chr(10) + "import com.lyricflow.data.AnimStyle")
     s = s.replace("import android.content.Context", "import android.content.Context" + chr(10) + "import android.content.Intent")
     s = s.replace("WidgetBody(s, np, bg, listening)", "WidgetBody(s, np, bg, listening, context)")
     s = s.replace("private fun WidgetBody(s: LyricSettings, np: NowPlaying, bg: Bitmap?, listening: Boolean)", "private fun WidgetBody(s: LyricSettings, np: NowPlaying, bg: Bitmap?, listening: Boolean, context: Context)")
@@ -91,25 +90,9 @@ def widget(s):
                   "else if (s.bgMode == BgMode.ICE) ColorProvider(Color(0xFF29495A).copy(alpha = 0.88f)) else ColorProvider(Color(s.textColor).copy(alpha = 0.82f))")
     s = s.replace("else ColorProvider(Color(s.accentColor))",
                   "else if (s.bgMode == BgMode.ICE) ColorProvider(Color(0xFF135D78)) else ColorProvider(Color(s.accentColor))")
-    old_line = '''                                val (main, sub) = LyricText.prepare(s.scriptMode, raw)
-                                val current = k == 0
-                                Text(
-                                    main,'''
-    new_line = '''                                val (main, sub) = LyricText.prepare(s.scriptMode, raw)
-                                val current = k == 0
-                                val displayMain = if (current && s.animStyle == AnimStyle.TYPEWRITER) {
-                                    val start = np.lyrics.getOrNull(idx)?.timeMs ?: 0L
-                                    val end = np.lyrics.getOrNull(idx + 1)?.timeMs ?: (start + 4000L)
-                                    val progress = ((np.positionMs() + s.syncOffsetMs - start).toFloat() / (end - start).coerceAtLeast(1L)).coerceIn(0f, 1f)
-                                    val count = main.codePointCount(0, main.length)
-                                    val endIndex = main.offsetByCodePoints(0, (count * progress * 1.25f).toInt().coerceIn(0, count))
-                                    main.substring(0, endIndex) + if (endIndex < main.length) "▏" else ""
-                                } else main
-                                Text(
-                                    displayMain,'''
-    if old_line not in s:
-        raise SystemExit("Widget lyric renderer source block did not match; stopping safely.")
-    s = s.replace(old_line, new_line)
+    # Keep the widget's existing lyric text rendering. Typewriter animation
+    # remains implemented in the in-app lyrics view; Glance widget updates are
+    # launcher-throttled and should not depend on fragile source rewriting.
     s = s.replace("actionStartActivity<MainActivity>()", "actionStartActivity(Intent(context, MainActivity::class.java))")
     return s
 edit("java/com/lyricflow/widget/LyricWidget.kt", widget)
