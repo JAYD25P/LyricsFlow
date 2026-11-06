@@ -57,7 +57,7 @@ def screens(s):
         if anchor not in s:
             raise SystemExit("Could not locate BackgroundMode settings when-expression in Screens.kt")
         s = s.replace(anchor,
-            'BgMode.ICE -> Text("Cool frosted-glass finish with an icy blue tint.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)\\n                BgMode.GLASS -> Text("Smoked translucent glass with a soft highlight and border.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)\\n                ' + anchor, 1)
+            'BgMode.ICE -> Text("Cool frosted-glass finish with an icy blue tint.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)' + chr(10) + '                BgMode.GLASS -> Text("Smoked translucent glass with a soft highlight and border.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)' + chr(10) + '                ' + anchor, 1)
     return s
 edit("java/com/lyricflow/ui/Screens.kt", screens)
 
