@@ -84,7 +84,7 @@ def widget(s):
     # using the Android class by its fully-qualified name at the call site.
     lines = [line for line in s.splitlines()
              if not (line.startswith("import ") and line.endswith(".Intent"))]
-    s = "\\n".join(lines)
+    s = "\n".join(lines)
     s = s.replace("WidgetBody(s, np, bg, listening)", "WidgetBody(s, np, bg, listening, context)")
     s = s.replace("private fun WidgetBody(s: LyricSettings, np: NowPlaying, bg: Bitmap?, listening: Boolean)", "private fun WidgetBody(s: LyricSettings, np: NowPlaying, bg: Bitmap?, listening: Boolean, context: Context)")
     s = s.replace("ColorProvider(Color(s.textColor).copy(alpha = 0.55f))", "ColorProvider(Color(s.textColor).copy(alpha = 0.82f))")
