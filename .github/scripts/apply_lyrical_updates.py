@@ -80,21 +80,11 @@ def renderer(s):
 edit("java/com/lyricflow/widget/BackgroundRenderer.kt", renderer)
 
 def widget(s):
-    # Normalize Intent imports: keep exactly one Android Intent import and
-    # remove competing/duplicate short-name imports that make Kotlin ambiguous.
-    import_lines = s.splitlines()
-    import_lines = [line for line in import_lines
-                    if not (line.startswith("import ") and line.endswith(".Intent")
-                            and line != "import android.content.Intent")]
-    while import_lines.count("import android.content.Intent") > 1:
-        import_lines.remove("import android.content.Intent")
-    if "import android.content.Intent" not in import_lines:
-        try:
-            context_index = import_lines.index("import android.content.Context")
-            import_lines.insert(context_index + 1, "import android.content.Intent")
-        except ValueError:
-            import_lines.insert(0, "import android.content.Intent")
-    s = "\n".join(import_lines)
+    # Avoid Kotlin short-name collisions by removing every Intent import and
+    # using the Android class by its fully-qualified name at the call site.
+    lines = [line for line in s.splitlines()
+             if not (line.startswith("import ") and line.endswith(".Intent"))]
+    s = "\\n".join(lines)
     s = s.replace("WidgetBody(s, np, bg, listening)", "WidgetBody(s, np, bg, listening, context)")
     s = s.replace("private fun WidgetBody(s: LyricSettings, np: NowPlaying, bg: Bitmap?, listening: Boolean)", "private fun WidgetBody(s: LyricSettings, np: NowPlaying, bg: Bitmap?, listening: Boolean, context: Context)")
     s = s.replace("ColorProvider(Color(s.textColor).copy(alpha = 0.55f))", "ColorProvider(Color(s.textColor).copy(alpha = 0.82f))")
@@ -104,10 +94,8 @@ def widget(s):
                   "else if (s.bgMode == BgMode.ICE) ColorProvider(Color(0xFF29495A).copy(alpha = 0.88f)) else ColorProvider(Color(s.textColor).copy(alpha = 0.82f))")
     s = s.replace("else ColorProvider(Color(s.accentColor))",
                   "else if (s.bgMode == BgMode.ICE) ColorProvider(Color(0xFF135D78)) else ColorProvider(Color(s.accentColor))")
-    # Keep the widget's existing lyric text rendering. Typewriter animation
-    # remains implemented in the in-app lyrics view; Glance widget updates are
-    # launcher-throttled and should not depend on fragile source rewriting.
-    s = s.replace("actionStartActivity<MainActivity>()", "actionStartActivity(Intent(context, MainActivity::class.java))")
+    s = s.replace("actionStartActivity<MainActivity>()",
+                  "actionStartActivity(android.content.Intent(context, MainActivity::class.java))")
     return s
 edit("java/com/lyricflow/widget/LyricWidget.kt", widget)
 
