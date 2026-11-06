@@ -5,8 +5,8 @@ on:
   push:
     paths:
       - 'LyricsFlow-Source.zip'
+      - 'Lyrical-Coffee-Overrides.tar.xz'
       - '.github/workflows/build-apk.yml'
-      - '.github/scripts/**'
 
 permissions:
   contents: read
@@ -30,20 +30,19 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Extract Android project
+      - name: Extract Android source and Lyrical updates
         run: |
           unzip -o LyricsFlow-Source.zip
+          tar -xJf Lyrical-Coffee-Overrides.tar.xz
           test -f LyricFlow/app/build.gradle.kts
-      - name: Apply Lyrical UI, widget and compatibility updates
-        working-directory: LyricFlow
-        run: python3 ../.github/scripts/apply_lyrical_updates.py
-      - name: Verify patched sources
-        working-directory: LyricFlow
+      - name: Verify Lyrical source updates
         run: |
-          grep -q 'codePoints = main.codePointCount' app/src/main/java/com/lyricflow/ui/LyricsView.kt
-          grep -q 'displayMain' app/src/main/java/com/lyricflow/widget/LyricWidget.kt
-          grep -q 'app_name">Lyrical<' app/src/main/res/values/strings.xml
-      - name: Build debug APK
+          grep -q 'COFFEE("Coffee")' LyricFlow/app/src/main/java/com/lyricflow/data/Model.kt
+          grep -q 'WidgetPreviewCard' LyricFlow/app/src/main/java/com/lyricflow/ui/Screens.kt
+          grep -q 'delay(500L)' LyricFlow/app/src/main/java/com/lyricflow/playback/LyricListenerService.kt
+          grep -q 'AnimStyle.TYPEWRITER' LyricFlow/app/src/main/java/com/lyricflow/widget/LyricWidget.kt
+          grep -q '<string name="app_name">Lyrical</string>' LyricFlow/app/src/main/res/values/strings.xml
+      - name: Run unit tests and build debug APK
         working-directory: LyricFlow
         run: gradle :app:testDebugUnitTest :app:assembleDebug --no-daemon
       - uses: actions/upload-artifact@v4
