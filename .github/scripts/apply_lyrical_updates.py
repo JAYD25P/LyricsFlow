@@ -51,12 +51,86 @@ edit("java/com/lyricflow/ui/LyricsView.kt", lyrics)
 def screens(s):
     s = s.replace('Section("Background", "Opacity lets your wallpaper show through the widget.")',
                   'Section("Background & widget style", "Choose a look for the live home-screen lyrics widget too. Ice gives a cool frosted finish; Glass uses a smoked translucent panel.")')
-    s = s.replace('''                BgMode.SYSTEM -> Text("Follows your phone's Material You colours (Android 12+).", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }''',
-    '''                BgMode.SYSTEM -> Text("Follows your phone's Material You colours (Android 12+).", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-      BgMode.ICE -> Text("Cool frosted-glass finish with an icy blue tint.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-      BgMode.GLASS -> Text("Smoked translucent glass with a soft highlight and border.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }''')
+    import re
+    pattern = r'(?m)^([ \\t]*)BgMode\\.SYSTEM -> Text\\("Follows your phone.s Material You colours \\(Android 12\\+\\)\\.".*)
+edit("java/com/lyricflow/ui/Screens.kt", screens)
+
+def renderer(s):
+    return s.replace('''            BgMode.IMAGE -> {''', '''            BgMode.ICE -> {
+      drawGradient(c, listOf(0xFFB9E7F5.toInt(), 0xFF6E9FB8.toInt(), 0xFFD9F4FA.toInt()))
+      val frost = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(92, 225, 248, 255) }
+      c.drawRoundRect(RectF(12f, 12f, W - 12f, H - 12f), 42f, 42f, frost)
+      val shine = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(70, 255, 255, 255) }
+      c.drawRect(0f, 0f, W.toFloat(), H * 0.22f, shine)
+  }
+  BgMode.GLASS -> {
+      drawGradient(c, listOf(0xFF101827.toInt(), 0xFF26364A.toInt(), 0xFF111827.toInt()))
+      val pane = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(130, 8, 15, 26) }
+      c.drawRoundRect(RectF(10f, 10f, W - 10f, H - 10f), 48f, 48f, pane)
+      val edge = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(95, 255, 255, 255); style = Paint.Style.STROKE; strokeWidth = 5f }
+      c.drawRoundRect(RectF(12f, 12f, W - 12f, H - 12f), 46f, 46f, edge)
+  }
+  BgMode.IMAGE -> {''')
+edit("java/com/lyricflow/widget/BackgroundRenderer.kt", renderer)
+
+def widget(s):
+    s = s.replace("import com.lyricflow.data.Align", "import com.lyricflow.data.Align" + chr(10) + "import com.lyricflow.data.AnimStyle")
+    s = s.replace("import android.content.Context", "import android.content.Context" + chr(10) + "import android.content.Intent")
+    s = s.replace("WidgetBody(s, np, bg, listening)", "WidgetBody(s, np, bg, listening, context)")
+    s = s.replace("private fun WidgetBody(s: LyricSettings, np: NowPlaying, bg: Bitmap?, listening: Boolean)", "private fun WidgetBody(s: LyricSettings, np: NowPlaying, bg: Bitmap?, listening: Boolean, context: Context)")
+    s = s.replace("ColorProvider(Color(s.textColor).copy(alpha = 0.55f))", "ColorProvider(Color(s.textColor).copy(alpha = 0.82f))")
+    s = s.replace("val text: ColorProvider = if (system) GlanceTheme.colors.onSurface else ColorProvider(Color(s.textColor))",
+                  "val text: ColorProvider = if (system) GlanceTheme.colors.onSurface else if (s.bgMode == BgMode.ICE) ColorProvider(Color(0xFF142B3A)) else ColorProvider(Color(s.textColor))")
+    s = s.replace("else ColorProvider(Color(s.textColor).copy(alpha = 0.82f))",
+                  "else if (s.bgMode == BgMode.ICE) ColorProvider(Color(0xFF29495A).copy(alpha = 0.88f)) else ColorProvider(Color(s.textColor).copy(alpha = 0.82f))")
+    s = s.replace("else ColorProvider(Color(s.accentColor))",
+                  "else if (s.bgMode == BgMode.ICE) ColorProvider(Color(0xFF135D78)) else ColorProvider(Color(s.accentColor))")
+    old_line = '''                                val (main, sub) = LyricText.prepare(s.scriptMode, raw)
+                                val current = k == 0
+                                Text(
+                                    main,'''
+    new_line = '''                                val (main, sub) = LyricText.prepare(s.scriptMode, raw)
+                                val current = k == 0
+                                val displayMain = if (current && s.animStyle == AnimStyle.TYPEWRITER) {
+                                    val start = np.lyrics.getOrNull(idx)?.timeMs ?: 0L
+                                    val end = np.lyrics.getOrNull(idx + 1)?.timeMs ?: (start + 4000L)
+                                    val progress = ((np.positionMs() + s.syncOffsetMs - start).toFloat() / (end - start).coerceAtLeast(1L)).coerceIn(0f, 1f)
+                                    val count = main.codePointCount(0, main.length)
+                                    val endIndex = main.offsetByCodePoints(0, (count * progress * 1.25f).toInt().coerceIn(0, count))
+                                    main.substring(0, endIndex) + if (endIndex < main.length) "▏" else ""
+                                } else main
+                                Text(
+                                    displayMain,'''
+    if old_line not in s:
+        raise SystemExit("Widget lyric renderer source block did not match; stopping safely.")
+    s = s.replace(old_line, new_line)
+    s = s.replace("actionStartActivity<MainActivity>()", "actionStartActivity(Intent(context, MainActivity::class.java))")
+    return s
+edit("java/com/lyricflow/widget/LyricWidget.kt", widget)
+
+def service(s):
+    return s.replace('''                val next = np.lyrics.getOrNull(np.indexAt(pos) + 1) ?: break
+      delay(((next.timeMs - pos) / np.speed).toLong().coerceAtLeast(40L))
+      redraw()''',
+    '''                val next = np.lyrics.getOrNull(np.indexAt(pos) + 1)
+      val untilNextLine = next?.let { ((it.timeMs - pos) / np.speed).toLong().coerceAtLeast(40L) } ?: 1000L
+      // Redraw at lyric boundaries and at least once per second while playing.
+      // The periodic refresh recovers from dropped media-session callbacks.
+      delay(minOf(untilNextLine, 1000L))
+      redraw()''')
+edit("java/com/lyricflow/playback/LyricListenerService.kt", service)
+
+p = root / "res/values/strings.xml"
+p.write_text(p.read_text().replace("<string name=\"app_name\">LyricFlow</string>", "<string name=\"app_name\">Lyrical</string>").replace("Live, synced lyrics for whatever is playing", "Lyrical live synced lyrics widget"))
+
+    def add_new_modes(match):
+        indent = match.group(1)
+        return (match.group(0) + "\\n" +
+                indent + 'BgMode.ICE -> Text("Cool frosted-glass finish with an icy blue tint.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)' + "\\n" +
+                indent + 'BgMode.GLASS -> Text("Smoked translucent glass with a soft highlight and border.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)')
+    s, count = re.subn(pattern, add_new_modes, s)
+    if count == 0:
+        raise SystemExit("Could not locate the background-mode settings when expression in Screens.kt")
     return s
 edit("java/com/lyricflow/ui/Screens.kt", screens)
 
