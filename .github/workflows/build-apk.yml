@@ -33,6 +33,25 @@ jobs:
         run: |
           unzip -o LyricsFlow-Source.zip
           test -f LyricFlow/app/build.gradle.kts
+      - name: Apply Kotlin compatibility fixes
+        working-directory: LyricFlow
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("app/src/main/java/com/lyricflow/ui/LyricsView.kt")
+          s = p.read_text()
+          s = s.replace("import androidx.compose.foundation.layout.matchParentSize", "import androidx.compose.foundation.layout.fillMaxSize")
+          s = s.replace("Modifier.matchParentSize()", "Modifier.fillMaxSize()")
+          p.write_text(s)
+
+          p = Path("app/src/main/java/com/lyricflow/widget/LyricWidget.kt")
+          s = p.read_text()
+          s = s.replace("import android.content.Context", "import android.content.Context\nimport android.content.Intent")
+          s = s.replace("WidgetBody(s, np, bg, listening)", "WidgetBody(s, np, bg, listening, context)")
+          s = s.replace("private fun WidgetBody(s: LyricSettings, np: NowPlaying, bg: Bitmap?, listening: Boolean)", "private fun WidgetBody(s: LyricSettings, np: NowPlaying, bg: Bitmap?, listening: Boolean, context: Context)")
+          s = s.replace("actionStartActivity<MainActivity>()", "actionStartActivity(Intent(context, MainActivity::class.java))")
+          p.write_text(s)
+          PY
       - name: Build debug APK
         working-directory: LyricFlow
         run: gradle :app:assembleDebug --no-daemon
