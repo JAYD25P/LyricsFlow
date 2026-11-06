@@ -7,7 +7,6 @@ on:
       - 'LyricsFlow-Source.zip'
       - 'Lyrical-Coffee-Overrides.part*'
       - 'Lyrical-Hotfix.part*'
-      - 'Lyrical-Updated-Source.zip'
       - '.github/workflows/build-apk.yml'
 
 permissions:
@@ -34,7 +33,7 @@ jobs:
           gradle-version: '8.9'
       - name: Extract Android source and Lyrical updates
         run: |
-          if [ -f Lyrical-Updated-Source.zip ]; then unzip -o Lyrical-Updated-Source.zip; else unzip -o LyricsFlow-Source.zip; fi
+          unzip -o LyricsFlow-Source.zip
           cat Lyrical-Coffee-Overrides.part* > Lyrical-Coffee-Overrides.tar.xz
           tar -xJf Lyrical-Coffee-Overrides.tar.xz
           cat Lyrical-Hotfix.part* > Lyrical-Hotfix.tar.xz
