@@ -182,7 +182,7 @@ jobs:
           grep -q 'app_name">Lyrical<' app/src/main/res/values/strings.xml
       - name: Build debug APK
         working-directory: LyricFlow
-        run: gradle :app:assembleDebug --no-daemon
+        run: gradle :app:testDebugUnitTest :app:assembleDebug --no-daemon
       - uses: actions/upload-artifact@v4
         with:
           name: Lyrical-APK
