@@ -6,6 +6,7 @@ on:
     paths:
       - 'LyricsFlow-Source.zip'
       - 'Lyrical-Coffee-Overrides.part*'
+      - 'Lyrical-Hotfix.part*'
       - '.github/workflows/build-apk.yml'
 
 permissions:
@@ -35,6 +36,8 @@ jobs:
           unzip -o LyricsFlow-Source.zip
           cat Lyrical-Coffee-Overrides.part* > Lyrical-Coffee-Overrides.tar.xz
           tar -xJf Lyrical-Coffee-Overrides.tar.xz
+          cat Lyrical-Hotfix.part* > Lyrical-Hotfix.tar.xz
+          tar -xJf Lyrical-Hotfix.tar.xz
           test -f LyricFlow/app/build.gradle.kts
       - name: Verify Lyrical source updates
         run: |
