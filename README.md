@@ -1,11 +1,9 @@
-# LyricsFlow — Android
+# Lyrical — Android synced lyrics
 
-This repository contains the Android APK build workflow. The project source archive must be uploaded at the repository root as `LyricsFlow-Source.zip`.
+Lyrical is the renamed Android synced-lyrics app. The build workflow applies the current UI contrast, live widget refresh, and Ice/Glass widget styles before compiling the APK.
 
 ## Build APK
 
-1. Upload `LyricsFlow-Source.zip` to the repository root (use the prepared ZIP from this ChatGPT conversation).
-2. Open **Actions → Build APK → Run workflow**.
-3. When the run completes, download the `LyricsFlow-APK` artifact. It contains `app-debug.apk`.
+Open **Actions → Build APK → Run workflow**. Download the `Lyrical-APK` artifact from the successful run. Extract the downloaded artifact ZIP to get `app-debug.apk`.
 
-The workflow extracts the `LyricFlow/` project and builds it with JDK 17, Android SDK, and Gradle 8.9.
+Notification access is required to read active media sessions and display synchronized lyrics.
