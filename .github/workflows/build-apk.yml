@@ -52,6 +52,8 @@ jobs:
 
           def lyrics(s):
               s = s.replace("import androidx.compose.foundation.layout.matchParentSize", "import androidx.compose.foundation.layout.fillMaxSize")
+              s = s.replace('if (s.bgMode == BgMode.SYSTEM) LyricColors(dyn?.onSurface ?: Color.White, dyn?.primary ?: Color(0xFFFF6FD8))\n    else LyricColors(Color(s.textColor), Color(s.accentColor))',
+                            'if (s.bgMode == BgMode.SYSTEM) LyricColors(dyn?.onSurface ?: Color.White, dyn?.primary ?: Color(0xFFFF6FD8))\n    else if (s.bgMode == BgMode.ICE) LyricColors(Color(0xFF142B3A), Color(0xFF135D78))\n    else LyricColors(Color(s.textColor), Color(s.accentColor))')
               s = s.replace("Modifier.matchParentSize()", "Modifier.fillMaxSize()")
               s = s.replace('''            BgMode.GRADIENT ->
                           Box(Modifier.fillMaxSize().background(Brush.linearGradient(gradient.colors.map { Color(it) }), alpha = a))''',
@@ -63,7 +65,7 @@ jobs:
                       }
                       BgMode.GLASS -> {
                           Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xFF101827), Color(0xFF26364A), Color(0xFF111827))), alpha = a))
-                          Box(Modifier.fillMaxSize().background(Color(0xFFB9D2E5).copy(alpha = 0.24f)))
+                          Box(Modifier.fillMaxSize().background(Color(0xFF081526).copy(alpha = 0.38f)))
                       }''')
               s = s.replace('else 0.4f) else 0.38f + 0.62f * a', 'else 0.72f) else 0.68f + 0.32f * a')
               s = s.replace('style = TextStyle(shadow = glow),', 'style = TextStyle(shadow = glow ?: Shadow(color = Color.Black.copy(alpha = 0.55f), blurRadius = 5f)),')
@@ -93,7 +95,7 @@ jobs:
             }
             BgMode.GLASS -> {
                 drawGradient(c, listOf(0xFF101827.toInt(), 0xFF26364A.toInt(), 0xFF111827.toInt()))
-                val pane = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(118, 210, 230, 245) }
+                val pane = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(130, 8, 15, 26) }
                 c.drawRoundRect(RectF(10f, 10f, W - 10f, H - 10f), 48f, 48f, pane)
                 val edge = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(95, 255, 255, 255); style = Paint.Style.STROKE; strokeWidth = 5f }
                 c.drawRoundRect(RectF(12f, 12f, W - 12f, H - 12f), 46f, 46f, edge)
@@ -106,6 +108,12 @@ jobs:
               s = s.replace("WidgetBody(s, np, bg, listening)", "WidgetBody(s, np, bg, listening, context)")
               s = s.replace("private fun WidgetBody(s: LyricSettings, np: NowPlaying, bg: Bitmap?, listening: Boolean)", "private fun WidgetBody(s: LyricSettings, np: NowPlaying, bg: Bitmap?, listening: Boolean, context: Context)")
               s = s.replace("ColorProvider(Color(s.textColor).copy(alpha = 0.55f))", "ColorProvider(Color(s.textColor).copy(alpha = 0.82f))")
+              s = s.replace("val text: ColorProvider = if (system) GlanceTheme.colors.onSurface else ColorProvider(Color(s.textColor))",
+                            "val text: ColorProvider = if (system) GlanceTheme.colors.onSurface else if (s.bgMode == BgMode.ICE) ColorProvider(Color(0xFF142B3A)) else ColorProvider(Color(s.textColor))")
+              s = s.replace("else ColorProvider(Color(s.textColor).copy(alpha = 0.82f))",
+                            "else if (s.bgMode == BgMode.ICE) ColorProvider(Color(0xFF29495A).copy(alpha = 0.88f)) else ColorProvider(Color(s.textColor).copy(alpha = 0.82f))")
+              s = s.replace("else ColorProvider(Color(s.accentColor))",
+                            "else if (s.bgMode == BgMode.ICE) ColorProvider(Color(0xFF135D78)) else ColorProvider(Color(s.accentColor))")
               s = s.replace("actionStartActivity<MainActivity>()", "actionStartActivity(Intent(context, MainActivity::class.java))")
               return s
           edit("java/com/lyricflow/widget/LyricWidget.kt", widget)
