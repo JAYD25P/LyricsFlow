@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'LyricFlow-Android-Source-Ready.zip'
+      - 'LyricsFlow-Source.zip'
       - '.github/workflows/build-apk.yml'
 
 permissions:
@@ -25,7 +25,7 @@ jobs:
           gradle-version: '8.9'
       - name: Extract Android project
         run: |
-          unzip -o LyricFlow-Android-Source-Ready.zip
+          unzip -o LyricsFlow-Source.zip
           test -f LyricFlow/app/build.gradle.kts
       - name: Build debug APK
         working-directory: LyricFlow
