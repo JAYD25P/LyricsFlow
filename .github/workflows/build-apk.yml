@@ -5,7 +5,7 @@ on:
   push:
     paths:
       - 'LyricsFlow-Source.zip'
-      - 'Lyrical-Coffee-Overrides.tar.xz'
+      - 'Lyrical-Coffee-Overrides.part*'
       - '.github/workflows/build-apk.yml'
 
 permissions:
@@ -33,6 +33,7 @@ jobs:
       - name: Extract Android source and Lyrical updates
         run: |
           unzip -o LyricsFlow-Source.zip
+          cat Lyrical-Coffee-Overrides.part* > Lyrical-Coffee-Overrides.tar.xz
           tar -xJf Lyrical-Coffee-Overrides.tar.xz
           test -f LyricFlow/app/build.gradle.kts
       - name: Verify Lyrical source updates
