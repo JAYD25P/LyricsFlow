@@ -17,25 +17,25 @@ def lyrics(s):
                   'if (s.bgMode == BgMode.SYSTEM) LyricColors(dyn?.onSurface ?: Color.White, dyn?.primary ?: Color(0xFFFF6FD8))\n    else if (s.bgMode == BgMode.ICE) LyricColors(Color(0xFF142B3A), Color(0xFF135D78))\n    else LyricColors(Color(s.textColor), Color(s.accentColor))')
     s = s.replace("Modifier.matchParentSize()", "Modifier.fillMaxSize()")
     old_typewriter = '''        } else if (active && style == AnimStyle.TYPEWRITER) {
-  val shownChars = (main.length * progress * 1.25f).roundToInt().coerceIn(0, main.length)
-  addStyle(SpanStyle(color = Color.Transparent), shownChars, main.length)
+            val shownChars = (main.length * progress * 1.25f).roundToInt().coerceIn(0, main.length)
+            addStyle(SpanStyle(color = Color.Transparent), shownChars, main.length)
         }'''
     new_typewriter = '''        } else if (active && style == AnimStyle.TYPEWRITER) {
-  val codePoints = main.codePointCount(0, main.length)
-  val shownChars = (codePoints * progress * 1.25f).roundToInt().coerceIn(0, codePoints)
-  val revealEnd = main.offsetByCodePoints(0, shownChars)
-  addStyle(SpanStyle(color = c.accent), 0, revealEnd)
-  if (revealEnd < main.length) {
-      val cursorStart = length
-      append("▏")
-      addStyle(SpanStyle(color = c.accent), cursorStart, length)
-      val hiddenStart = length
-      append(main.substring(revealEnd))
-      addStyle(SpanStyle(color = Color.Transparent), hiddenStart, length)
-  }
+            val codePoints = main.codePointCount(0, main.length)
+            val shownChars = (codePoints * progress * 1.25f).roundToInt().coerceIn(0, codePoints)
+            val revealEnd = main.offsetByCodePoints(0, shownChars)
+            addStyle(SpanStyle(color = c.accent), 0, revealEnd)
+            if (revealEnd < main.length) {
+                val cursorStart = length
+                append("▏")
+                addStyle(SpanStyle(color = c.accent), cursorStart, length)
+                val hiddenStart = length
+                append(main.substring(revealEnd))
+                addStyle(SpanStyle(color = Color.Transparent), hiddenStart, length)
+            }
         }'''
     if old_typewriter not in s:
-        raise SystemExit("Expected typewriter renderer was not found; refusing to build a partial patch.")
+        raise SystemExit("Typewriter source block did not match; stopping safely.")
     s = s.replace(old_typewriter, new_typewriter)
     s = s.replace('''            BgMode.GRADIENT ->
                 Box(Modifier.fillMaxSize().background(Brush.linearGradient(gradient.colors.map { Color(it) }), alpha = a))''',
@@ -98,23 +98,23 @@ def widget(s):
     s = s.replace("else ColorProvider(Color(s.accentColor))",
                   "else if (s.bgMode == BgMode.ICE) ColorProvider(Color(0xFF135D78)) else ColorProvider(Color(s.accentColor))")
     old_line = '''                                val (main, sub) = LyricText.prepare(s.scriptMode, raw)
-                      val current = k == 0
-                      Text(
-                          main,'''
+                                val current = k == 0
+                                Text(
+                                    main,'''
     new_line = '''                                val (main, sub) = LyricText.prepare(s.scriptMode, raw)
-                      val current = k == 0
-                      val displayMain = if (current && s.animStyle == AnimStyle.TYPEWRITER) {
-                          val start = np.lyrics.getOrNull(idx)?.timeMs ?: 0L
-                          val end = np.lyrics.getOrNull(idx + 1)?.timeMs ?: (start + 4000L)
-                          val progress = ((np.positionMs() + s.syncOffsetMs - start).toFloat() / (end - start).coerceAtLeast(1L)).coerceIn(0f, 1f)
-                          val count = main.codePointCount(0, main.length)
-                          val endIndex = main.offsetByCodePoints(0, (count * progress * 1.25f).toInt().coerceIn(0, count))
-                          main.substring(0, endIndex) + if (endIndex < main.length) "▏" else ""
-                      } else main
-                      Text(
-                          displayMain,'''
+                                val current = k == 0
+                                val displayMain = if (current && s.animStyle == AnimStyle.TYPEWRITER) {
+                                    val start = np.lyrics.getOrNull(idx)?.timeMs ?: 0L
+                                    val end = np.lyrics.getOrNull(idx + 1)?.timeMs ?: (start + 4000L)
+                                    val progress = ((np.positionMs() + s.syncOffsetMs - start).toFloat() / (end - start).coerceAtLeast(1L)).coerceIn(0f, 1f)
+                                    val count = main.codePointCount(0, main.length)
+                                    val endIndex = main.offsetByCodePoints(0, (count * progress * 1.25f).toInt().coerceIn(0, count))
+                                    main.substring(0, endIndex) + if (endIndex < main.length) "▏" else ""
+                                } else main
+                                Text(
+                                    displayMain,'''
     if old_line not in s:
-        raise SystemExit("Expected widget lyric renderer was not found; refusing to build a partial patch.")
+        raise SystemExit("Widget lyric renderer source block did not match; stopping safely.")
     s = s.replace(old_line, new_line)
     s = s.replace("actionStartActivity<MainActivity>()", "actionStartActivity(Intent(context, MainActivity::class.java))")
     return s
