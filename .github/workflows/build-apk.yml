@@ -7,6 +7,7 @@ on:
       - 'LyricsFlow-Source.zip'
       - 'Lyrical-Coffee-Overrides.part*'
       - 'Lyrical-Hotfix.part*'
+      - 'Lyrical-SyncFix.part*'
       - '.github/workflows/build-apk.yml'
 
 permissions:
@@ -38,12 +39,14 @@ jobs:
           tar -xJf Lyrical-Coffee-Overrides.tar.xz
           cat Lyrical-Hotfix.part* > Lyrical-Hotfix.tar.xz
           tar -xJf Lyrical-Hotfix.tar.xz
+          cat Lyrical-SyncFix.part* > Lyrical-SyncFix.tar.xz
+          tar -xJf Lyrical-SyncFix.tar.xz
           test -f LyricFlow/app/build.gradle.kts
       - name: Verify Lyrical source updates
         run: |
           grep -q 'COFFEE("Coffee")' LyricFlow/app/src/main/java/com/lyricflow/data/Model.kt
           grep -q 'WidgetPreviewCard' LyricFlow/app/src/main/java/com/lyricflow/ui/Screens.kt
-          grep -q 'delay(500L)' LyricFlow/app/src/main/java/com/lyricflow/playback/LyricListenerService.kt
+          grep -q 'NowPlayingStore.frame' LyricFlow/app/src/main/java/com/lyricflow/playback/LyricListenerService.kt
           grep -q 'AnimStyle.TYPEWRITER' LyricFlow/app/src/main/java/com/lyricflow/widget/LyricWidget.kt
           grep -q '<string name="app_name">Lyrical</string>' LyricFlow/app/src/main/res/values/strings.xml
       - name: Run unit tests and build debug APK
